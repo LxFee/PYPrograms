@@ -20,6 +20,9 @@ def deformat(current_path, content, client):
 if __name__ == '__main__':
     currentpath = sys.argv[0]
     filepath = sys.argv[1]
+    if not filepath.endswith('md'):
+        print('文件类型不支持')
+        exit()
     content = open(filepath, encoding='utf-8').read()
     dir_path = os.path.split(filepath)[0]
     current_dirpath = os.path.split(currentpath)[0]
