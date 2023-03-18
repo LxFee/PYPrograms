@@ -7,7 +7,6 @@ from tkinter import filedialog
 from xml.dom.minidom import parse
 import xml.dom.minidom
 from concurrent.futures import ThreadPoolExecutor
-import threading
 
 def get_epub_title(epub_path):
     book = epub.read_epub(epub_path)
