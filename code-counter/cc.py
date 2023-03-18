@@ -35,15 +35,13 @@ def walk_impl(current_path, ext_filter, ext_lines, depth):
     try:
         dir_list, file_list = split_dir(current_path)
         for filename in file_list:
-            ext = os.path.splitext(filename)[-1]
-            if ext in ext_filter:
-                if ext not in ext_lines:
-                    ext_lines[ext] = 0
-                line_num = count(os.path.join(current_path, filename))
-                ext_lines[ext] = ext_lines[ext] + line_num
-                log("file: {}, {} lines".format(filename, line_num), depth)
+            for ext in ext_filter:
+                if filename.endswith(ext):
+                    line_num = count(os.path.join(current_path, filename))
+                    ext_lines[ext] = ext_lines[ext] + line_num
+                    log("file: {}, {} lines".format(filename, line_num), depth)
             else:
-                log("{} not in {}, ignored: {}".format(ext, ext_filter, filename), depth)
+                log("ignored: {}".format(filename), depth)
         
         for dirname in dir_list:
             log("in dir: {}".format(dirname), depth)
@@ -54,6 +52,9 @@ def walk_impl(current_path, ext_filter, ext_lines, depth):
 
 def walk(current_path, ext_filter):
     ext_lines = {}
+    for ext in ext_filter:
+        if ext not in ext_lines:
+            ext_lines[ext] = 0
     walk_impl(current_path, ext_filter, ext_lines, 1)
     return ext_lines
 
@@ -102,9 +103,9 @@ if __name__ == '__main__':
     log("args = {}".format(args))
 
     if need_help:
-        print("{} [--debug] [--dir-filter ...] [--ext-filter ...]".format(sys.argv[0]))
-        print("for example: {} --debug --dir-filter src/App1 src/App2 --ext-filter .h .c .py".format(sys.argv[0]))
-        print("default: ext-filter = {}\n".format(ext_filter))
+        print("{} [path] [--debug] [--dir-filter ...] [--ext-filter ...]".format(sys.argv[0]))
+        print("for example: {} ./project --debug --dir-filter src/App1 src/App2 --ext-filter .h .c .py".format(sys.argv[0]))
+        print("default: ext-filter = {}, path = \".\"\n".format(ext_filter))
     
     for sub_dir in dir_filter:
         target_dir = os.path.join(cwd, sub_dir)
