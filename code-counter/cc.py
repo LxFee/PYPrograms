@@ -4,12 +4,12 @@
 import os
 import sys
 
-debug : bool = False
+debug_mode : bool = False
 
-def log(msg, depth = 0):
+def log(message, depth = 0):
     shift = depth * "    "
-    if debug:
-        print(shift + msg)
+    if debug_mode:
+        print(shift + message)
 
 def split_dir(current_path):
     file_list = []
@@ -22,7 +22,7 @@ def split_dir(current_path):
             file_list.append(sub)
     return dir_list, file_list
 
-def count(filepath):
+def count_line_num_from_file(filepath):
     count = 0
     f = open(filepath, "r", encoding='UTF-8')
     for idx, line in enumerate(f):
@@ -31,38 +31,38 @@ def count(filepath):
     return count
 
 
-def walk_impl(current_path, ext_filter, ext_lines, depth):
+def walk_impl(current_path, ext_filter, ext_filter_line_num, depth):
     try:
-        dir_list, file_list = split_dir(current_path)
-        for filename in file_list:
+        dirnames, filenames = split_dir(current_path)
+        for filename in filenames:
             for ext in ext_filter:
                 if filename.endswith(ext):
-                    line_num = count(os.path.join(current_path, filename))
-                    ext_lines[ext] = ext_lines[ext] + line_num
+                    line_num = count_line_num_from_file(os.path.join(current_path, filename))
+                    ext_filter_line_num[ext] = ext_filter_line_num[ext] + line_num
                     log("file: {}, {} lines".format(filename, line_num), depth)
             else:
                 log("ignored: {}".format(filename), depth)
         
-        for dirname in dir_list:
+        for dirname in dirnames:
             log("in dir: {}".format(dirname), depth)
-            walk_impl(os.path.join(current_path, dirname), ext_filter, ext_lines, depth + 1)
+            walk_impl(os.path.join(current_path, dirname), ext_filter, ext_filter_line_num, depth + 1)
             log("out dir: {}".format(dirname), depth)
     except:
         log("error occur!", depth)
 
 def walk(current_path, ext_filter):
-    ext_lines = {}
+    ext_filter_line_num = {}
     for ext in ext_filter:
-        if ext not in ext_lines:
-            ext_lines[ext] = 0
-    walk_impl(current_path, ext_filter, ext_lines, 1)
-    return ext_lines
+        if ext not in ext_filter_line_num:
+            ext_filter_line_num[ext] = 0
+    walk_impl(current_path, ext_filter, ext_filter_line_num, 1)
+    return ext_filter_line_num
 
-# cc.py [path] [--debug] [--dir-filter ...] [--ext-filter ...]
+# cc.py [path] [--debug] [--help] [--dir-filter ...] [--ext-filter ...]
 if __name__ == '__main__':
     dir_filter = []
     ext_filter = []
-    dir_filter_lines = {}
+    dir_filter_line_num = {}
     state = 0
     need_help = False
     cwd = "."
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     for arg in args:
         if arg.startswith("--"):
             if arg == "--debug":
-                debug = True
+                debug_mode = True
                 state = 0
             elif arg == "--ext-filter":
                 state = 1
@@ -103,22 +103,22 @@ if __name__ == '__main__':
     log("args = {}".format(args))
 
     if need_help:
-        print("{} [path] [--debug] [--dir-filter ...] [--ext-filter ...]".format(sys.argv[0]))
+        print("{} [path] [--debug] [--help] [--dir-filter ...] [--ext-filter ...]".format(sys.argv[0]))
         print("for example: {} ./project --debug --dir-filter src/App1 src/App2 --ext-filter .h .c .py".format(sys.argv[0]))
         print("default: ext-filter = {}, path = \".\"\n".format(ext_filter))
     
-    for sub_dir in dir_filter:
-        target_dir = os.path.join(cwd, sub_dir)
+    for dir in dir_filter:
+        target_dir = os.path.join(cwd, dir)
         log("dealing dir: {}".format(target_dir), 0)
-        ext_lines = walk(target_dir, ext_filter)
-        dir_filter_lines[sub_dir] = ext_lines
+        ext_filter_line_num = walk(target_dir, ext_filter)
+        dir_filter_line_num[dir] = ext_filter_line_num
     
-    total_lines = 0
-    for k, v in dir_filter_lines.items():
+    total_line_num = 0
+    for k, v in dir_filter_line_num.items():
         line_num = sum(v.values())
         if len(k) > 0:
             print("{}\t: {}\tlines".format(k, line_num))
-        total_lines = total_lines + line_num
+        total_line_num = total_line_num + line_num
     
-    print("Total: {} lines".format(total_lines))
+    print("Total: {} lines".format(total_line_num))
     

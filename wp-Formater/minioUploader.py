@@ -1,7 +1,9 @@
 # coding=utf-8
 from minio import Minio
 from minio.error import InvalidResponseError
+from minio.commonconfig import Tags
 import os
+import time
 import configparser
 import hashlib
 
@@ -32,9 +34,10 @@ def minioGetObjectNameList(client, bucket):
             objectNameList.append(object.object_name)
     return objectNameList
 
-def uploadImage(clientObj, bucket, image_path):
+def uploadImage(clientObj, image_path, label):
     client = clientObj[0]
     url = clientObj[1]
+    bucket = clientObj[2]
     try:
         if not client.bucket_exists(bucket):
             print("Bucket: {} not exists".format(bucket))
@@ -45,6 +48,10 @@ def uploadImage(clientObj, bucket, image_path):
             print("File: {} already existed, skipped".format(minio_image_name))
         else:
             print(client.fput_object(bucket, minio_image_name, image_path))
+        tags = client.get_object_tags(bucket, minio_image_name)
+        tags[label] = time.strftime("%Y-%m-%d",time.localtime(time.time()))
+        client.set_object_tags(bucket, minio_image_name, tags)
+        print("image tags: {}".format(tags))
         return url + "/" + bucket + "/" + minio_image_name
     except InvalidResponseError as err:
         print(err)
@@ -64,6 +71,7 @@ def loadMinioClient(config_path):
     items = dict(con.items('minio'))
     secure = toBoolean(items['secure'])
     endpoint = items['host']
+    bucket = items['bucket_name']
     url = endpoint
     if secure :
         url = 'https://' + url
@@ -72,5 +80,5 @@ def loadMinioClient(config_path):
     return (Minio(   endpoint = items['host'],
                     access_key = items['access_key'],
                     secret_key = items['secret_key'],
-                    secure = toBoolean(items['secure'])), url)
+                    secure = toBoolean(items['secure'])), url, bucket)
     

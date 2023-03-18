@@ -5,7 +5,7 @@ import os
 
 pattern = re.compile(r'(!\[.*\]\((.*?)( +"(.*?)")?\))')
 
-def replaceImagePath(current_path, content, client):
+def replaceImagePath(current_path, content, client, label):
     imagePaths = pattern.findall(content)
     print(imagePaths)
     for imagePath in imagePaths:
@@ -16,7 +16,7 @@ def replaceImagePath(current_path, content, client):
         if imageUrl.startswith(("https", "http")):
             pass
         elif os.path.isfile(os.path.join(current_path, imageUrl)):
-            url = minioUploader.uploadImage(client, "images", os.path.join(current_path, imageUrl))
+            url = minioUploader.uploadImage(client, os.path.join(current_path, imageUrl), label)
             if url is not None:
                 newMarkdownCode = newMarkdownCode.replace(imageUrl, url)
             else:
