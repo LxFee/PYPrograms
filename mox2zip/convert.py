@@ -6,7 +6,6 @@ import tkinter as tk
 from tkinter import filedialog
 from xml.dom.minidom import parse
 import xml.dom.minidom
-from concurrent.futures import ThreadPoolExecutor
 
 def get_epub_title(epub_path):
     book = epub.read_epub(epub_path)
@@ -78,9 +77,6 @@ def zip_images(img_dir, output_path):
     print('{} 创建成功'.format(output_path))
 
 
-pool = ThreadPoolExecutor(max_workers=4)
-
-
 if __name__ == '__main__':
     root = tk.Tk()
     root.withdraw()
@@ -90,14 +86,10 @@ if __name__ == '__main__':
     if input_dir == "":
         exit()
     
-    future_list = []
-    book_paths = os.listdir(input_dir)
-    for book_path in book_paths:
-        book_name, ext = os.path.splitext(os.path.join(input_dir, book_path))
-        if ext == '.epub':
-            future_list.append(pool.submit(handle_epub, book_path, output_dir))
-            # handle_epub(book_path, output_dir)
+    book_names = os.listdir(input_dir)
+    for book_name in book_names:
+        book_path = os.path.join(input_dir, book_name)
+        if book_name.endswith('.epub'):
+            handle_epub(book_path, output_dir)
 
-    for future in future_list:
-        future.result()
     shutil.rmtree(os.path.join(output_dir, 'tmp'))
